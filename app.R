@@ -69,6 +69,23 @@ ui <- dashboardPage(
   ),
   
   dashboardBody(
+    # Custom CSS to reduce font size in value boxes and prevent text from being cut off
+    tags$head(
+      tags$style(HTML("
+        .small-box .inner {
+          padding: 10px; /* Reduce padding to save space */
+        }
+        .small-box .inner h3 {
+          font-size: 24px !important; /* Reduce the size of the main number */
+          line-height: 1.2;
+        }
+        .small-box .inner p {
+          font-size: 12px !important; /* Reduce the size of the label text */
+          line-height: 1.3;
+        }
+      "))
+    ),
+    
     tabItems(
       tabItem(tabName = "overview",
               fluidRow(
