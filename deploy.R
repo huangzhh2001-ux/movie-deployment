@@ -1,10 +1,6 @@
-cat("SHINY_ACC_NAME:", Sys.getenv("SHINY_ACC_NAME"), "\n")
-cat("SHINY_TOKEN length:", nchar(Sys.getenv("SHINY_TOKEN")), "\n")
-cat("SHINY_SECRET length:", nchar(Sys.getenv("SHINY_SECRET")), "\n")
-
 rsconnect::setAccountInfo(
-  name = Sys.getenv("SHINY_ACC_NAME"),
-  token = Sys.getenv("SHINY_TOKEN"),
-  secret = Sys.getenv("SHINY_SECRET")
+  name = "huangzhaohua25085502",   # 替换为你的正确账户名（无短横线）
+  token = "88BCDD4282BA762E65041D55C5990639",
+  secret = "PR5mrINEDiAe+o9ofyL8UaFfPcqNC+Ad3j51Fr9x"
 )
 rsconnect::deployApp(appDir = ".", appName = "movie-dashboard", forceUpdate = TRUE)
