@@ -4,11 +4,13 @@
 # Load Required Packages
 library(shiny)
 library(shinydashboard)
-library(tidyverse)
 library(plotly)
 library(DT)
+library(dplyr)
+library(ggplot2)
+library(tidyr)
+library(stringr)
 library(scales)
-library(shinyWidgets)
 
 # Load Data
 df_eda <- read.csv("clean_data.csv", fileEncoding = "UTF-8", stringsAsFactors = FALSE)
