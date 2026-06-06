@@ -12,11 +12,12 @@ library(tidyr)
 library(stringr)
 library(scales)
 
-# Load Data
+# Load raw dataset from local csv file
 df_eda <- read.csv("clean_data.csv", fileEncoding = "UTF-8", stringsAsFactors = FALSE)
 
 # ========================
-# Data Preprocessing
+# Data Preprocessing Section
+# Filter valid records and rename movie name column for dashboard usage
 # ========================
 dashboard_data <- df_eda %>%
   filter(
@@ -32,25 +33,29 @@ dashboard_data <- df_eda %>%
   )
 
 # ========================
-# UI Layout
+# UI Layout Definition
+# Define overall dashboard page structure, sidebar and body content
 # ========================
 ui <- dashboardPage(
-  # Apply blue skin theme for a consistent color scheme
+  # Apply blue skin theme for consistent page color scheme
   skin = "blue",
   dashboardHeader(title = "Movie Data Interactive Dashboard"),
   
   dashboardSidebar(
+    # Year selection slider
     sliderInput(
       inputId = "year_range",
       label = "Year Range",
       min = 2000, max = 2024,
       value = c(2000, 2024), sep = ""
     ),
+    # Audience rating filter slider
     sliderInput(
       inputId = "rating_range",
       label = "Audience Rating",
       min = 0, max = 10, value = c(0, 10)
     ),
+    # Worldwide gross revenue filter slider (unit: million USD)
     sliderInput(
       inputId = "gross_range",
       label = "Worldwide Gross (Million USD)",
@@ -58,35 +63,41 @@ ui <- dashboardPage(
       value = c(0, round(max(dashboard_data$Worldwide_Gross)/1e6))
     ),
     hr(),
+    # Sidebar navigation menu list
     sidebarMenu(
       menuItem("Overview", tabName = "overview", icon = icon("dashboard")),
       menuItem("Trend Analysis", tabName = "trend", icon = icon("chart-line")),
       menuItem("Distribution", tabName = "distribution", icon = icon("box")),
-      # Add scatter plot icon for Relationship tab
       menuItem("Relationship", tabName = "relationship", icon = icon("link")),
-      menuItem("Top Movies", tabName = "topmovies", icon = icon("trophy"))
+      menuItem("Top Movies", tabName = "topmovies", icon = icon("trophy")),
+      menuItem("About This App", tabName = "about", icon = icon("info-circle"))
     )
   ),
   
   dashboardBody(
-    # Custom CSS to reduce font size in value boxes and prevent text from being cut off
+    # Custom CSS: center all text inside valueBox cards and adjust font size
     tags$head(
       tags$style(HTML("
         .small-box .inner {
-          padding: 10px; /* Reduce padding to save space */
+          padding: 10px;
+          text-align:center !important;
         }
         .small-box .inner h3 {
-          font-size: 24px !important; /* Reduce the size of the main number */
+          font-size: 24px !important;
           line-height: 1.2;
+          text-align:center !important;
         }
         .small-box .inner p {
-          font-size: 12px !important; /* Reduce the size of the label text */
+          font-size: 12px !important;
           line-height: 1.3;
+          text-align:center !important;
         }
       "))
     ),
     
+    # Each tab content panel definition
     tabItems(
+      # Overview page: summary KPIs + full dataset table
       tabItem(tabName = "overview",
               fluidRow(
                 valueBoxOutput("total_movies", width = 3),
@@ -98,6 +109,7 @@ ui <- dashboardPage(
               box(title = "Movie Dataset", DTOutput("movie_table"), width = 12)
       ),
       
+      # Trend Analysis page: annual gross & annual release count visualization
       tabItem(tabName = "trend",
               fluidRow(
                 box(title = "Annual Average Box Office", plotlyOutput("trend_plot"), width = 8),
@@ -105,18 +117,21 @@ ui <- dashboardPage(
               )
       ),
       
+      # Distribution page: boxplot grouped by release year group
       tabItem(tabName = "distribution",
               fluidRow(
                 box(title = "Box Office Distribution by Year Group", plotlyOutput("box_plot"), width = 12)
               )
       ),
       
+      # Relationship page: runtime vs audience rating scatter plot
       tabItem(tabName = "relationship",
               fluidRow(
                 box(title = "Duration vs Rating", plotlyOutput("scatter_plot"), width = 12)
               )
       ),
       
+      # Top Movies page: top ranking tables + four-quadrant performance analysis
       tabItem(tabName = "topmovies",
               fluidRow(
                 box(title = "Top 20 by Box Office", DTOutput("top_gross"), width = 6),
@@ -125,17 +140,41 @@ ui <- dashboardPage(
               fluidRow(
                 box(title = "Movie Performance Quadrant", plotlyOutput("quadrant_plot"), width = 12)
               )
+      ),
+      
+      # About page: project introduction, course info and analysis description
+      tabItem(tabName = "about",
+              box(width = 12, solidHeader = FALSE,
+                  h2(icon("book"),"About This Application"),hr(),
+                  h4("Course: WQD7004 - Programming for Data Science"),
+                  h4("Dataset: Global Movie Boxoffice & Rating Dataset (2000–2024)"),
+                  h4("Core Analysis Modules: Trend Analysis | Distribution | Correlation | Quadrant Classification"),
+                  br(),
+                  h3("Purpose"),
+                  p("This interactive dashboard explores global commercial performance & audience rating characteristics of modern movies, analyzing how release year, runtime affect box-office revenue and audience evaluation across different year cohorts."),
+                  br(),
+                  h3("Methodology"),
+                  tags$ul(
+                    tags$li("Time-series trend visualization for annual average box-office & movie release count"),
+                    tags$li("Boxplot distribution analysis of gross revenue grouped by release period"),
+                    tags$li("Scatter correlation between movie runtime and audience rating"),
+                    tags$li("Quadrant segmentation: Blockbuster / Commercial Hit / Cult Classic / Low Performer by rating & gross cutoff")
+                  ),
+                  br(),
+                  p("Note: Worldwide Gross unit converted to Million USD for unified visualization.")
+              )
       )
     )
   )
 )
 
 # ========================
-# Server Logic
+# Server Logic Section
+# Define reactive filter and all plot/table rendering functions
 # ========================
 server <- function(input, output, session) {
   
-  # Reactive data filtering based on user input
+  # Reactive dataset: dynamically filter data based on user sidebar input
   filtered_data <- reactive({
     dashboard_data %>%
       filter(
@@ -145,7 +184,7 @@ server <- function(input, output, session) {
       )
   })
   
-  # 1. Overview - Key metrics (all blue-themed value boxes)
+  # Render four key indicator value boxes for overview tab
   output$total_movies <- renderValueBox({
     valueBox(nrow(filtered_data()), "Total Movies", icon = icon("film"), color = "blue")
   })
@@ -162,14 +201,14 @@ server <- function(input, output, session) {
     valueBox(paste0(avg, " min"), "Avg Duration", icon = icon("clock"), color = "aqua")
   })
   
-  # Render interactive movie dataset table
+  # Render full interactive dataset table
   output$movie_table <- renderDT({
     filtered_data() %>%
       select(Movie_Name, Year, Worldwide_Gross, Rating, Duration_min, Year_Group) %>%
       datatable(options = list(scrollX = TRUE, pageLength = 10))
   })
   
-  # 2. Trend analysis plots
+  # Annual average box office line chart (convert ggplot to plotly interactive)
   output$trend_plot <- renderPlotly({
     p <- filtered_data() %>%
       group_by(Year) %>%
@@ -181,7 +220,7 @@ server <- function(input, output, session) {
     ggplotly(p)
   })
   
-  # Count plot updated to blue color
+  # Annual movie release count bar chart
   output$count_plot <- renderPlotly({
     p <- filtered_data() %>%
       count(Year) %>%
@@ -192,7 +231,7 @@ server <- function(input, output, session) {
     ggplotly(p)
   })
   
-  # 3. Box plot with blue-themed color palette
+  # Box office distribution boxplot grouped by year group with log y-axis
   output$box_plot <- renderPlotly({
     p <- filtered_data() %>%
       ggplot(aes(x = Year_Group, y = Worldwide_Gross/1e6, fill = Year_Group)) +
@@ -204,7 +243,7 @@ server <- function(input, output, session) {
     ggplotly(p)
   })
   
-  # 4. Scatter plot updated to blue color
+  # Runtime vs Rating scatter plot
   output$scatter_plot <- renderPlotly({
     p <- filtered_data() %>%
       ggplot(aes(x = Duration_min, y = Rating)) +
@@ -214,7 +253,7 @@ server <- function(input, output, session) {
     ggplotly(p)
   })
   
-  # 5. Top movies tables
+  # Top20 movies sorted by worldwide gross revenue
   output$top_gross <- renderDT({
     filtered_data() %>%
       arrange(desc(Worldwide_Gross)) %>%
@@ -223,6 +262,7 @@ server <- function(input, output, session) {
       datatable()
   })
   
+  # Top20 movies sorted by audience rating
   output$top_rating <- renderDT({
     filtered_data() %>%
       arrange(desc(Rating)) %>%
@@ -231,7 +271,7 @@ server <- function(input, output, session) {
       datatable()
   })
   
-  # Quadrant plot with consistent blue color
+  # Four quadrant analysis scatter plot split by average rating and average gross
   output$quadrant_plot <- renderPlotly({
     avg_r <- mean(filtered_data()$Rating, na.rm=TRUE)
     avg_g <- mean(filtered_data()$Worldwide_Gross, na.rm=TRUE)/1e6
@@ -248,6 +288,6 @@ server <- function(input, output, session) {
 }
 
 # ========================
-# Launch dashboard
+# Run shiny application
 # ========================
 shinyApp(ui = ui, server = server)
