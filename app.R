@@ -201,15 +201,14 @@ server <- function(input, output, session) {
     valueBox(paste0(avg, " min"), "Avg Duration", icon = icon("clock"), color = "aqua")
   })
   
-  # Render full interactive dataset table【表格全居中】
+  # Render full interactive dataset table
   output$movie_table <- renderDT({
     filtered_data() %>%
       select(Movie_Name, Year, Worldwide_Gross, Rating, Duration_min, Year_Group) %>%
-      datatable(options = list(scrollX = TRUE, pageLength = 10,
-                               columnDefs = list(list(className = "dt-center", targets = "_all"))))
+      datatable(options = list(scrollX = TRUE, pageLength = 10))
   })
   
-  # Annual average box office line chart【Plotly原生标题居中】
+  # Annual average box office line chart (convert ggplot to plotly interactive)
   output$trend_plot <- renderPlotly({
     p <- filtered_data() %>%
       group_by(Year) %>%
@@ -218,7 +217,7 @@ server <- function(input, output, session) {
       geom_line(color = "#1565C0", linewidth = 1.2) +
       labs(title = "Annual Average Box Office", x = "Year", y = "Gross (Million USD)") +
       theme_minimal()
-    ggplotly(p) %>% layout(title = list(x = 0.5))
+    ggplotly(p)
   })
   
   # Annual movie release count bar chart
@@ -227,9 +226,9 @@ server <- function(input, output, session) {
       count(Year) %>%
       ggplot(aes(x = Year, y = n)) +
       geom_col(fill = "#42A5F5") +
-      labs(x = "Year", y = "Number of Movies", title = "Annual Movie Count") +
+      labs(x = "Year", y = "Number of Movies") +
       theme_minimal()
-    ggplotly(p) %>% layout(title = list(x = 0.5))
+    ggplotly(p)
   })
   
   # Box office distribution boxplot grouped by year group with log y-axis
@@ -239,9 +238,9 @@ server <- function(input, output, session) {
       geom_boxplot(alpha=0.7) +
       scale_fill_manual(values = c("#BBDEFB", "#64B5F6", "#1976D2")) +
       scale_y_log10(labels = scales::comma) +
-      labs(x = "Year Group", y = "Worldwide Gross (Million$)", title = "Box Office Distribution by Year Group") +
+      labs(x = "Year Group", y = "Worldwide Gross (Million$)") +
       theme_minimal()
-    ggplotly(p) %>% layout(title = list(x = 0.5))
+    ggplotly(p)
   })
   
   # Runtime vs Rating scatter plot
@@ -249,30 +248,30 @@ server <- function(input, output, session) {
     p <- filtered_data() %>%
       ggplot(aes(x = Duration_min, y = Rating)) +
       geom_point(alpha = 0.6, color = "#1976D2") +
-      labs(x = "Duration (minutes)", y = "Audience Rating", title = "Duration vs Rating") +
+      labs(x = "Duration (minutes)", y = "Audience Rating") +
       theme_minimal()
-    ggplotly(p) %>% layout(title = list(x = 0.5))
+    ggplotly(p)
   })
   
-  # Top20 movies sorted by worldwide gross revenue【表格居中】
+  # Top20 movies sorted by worldwide gross revenue
   output$top_gross <- renderDT({
     filtered_data() %>%
       arrange(desc(Worldwide_Gross)) %>%
       slice(1:20) %>%
       select(Movie_Name, Year, Worldwide_Gross, Rating) %>%
-      datatable(options = list(columnDefs = list(list(className = "dt-center", targets = "_all"))))
+      datatable()
   })
   
-  # Top20 movies sorted by audience rating【表格居中】
+  # Top20 movies sorted by audience rating
   output$top_rating <- renderDT({
     filtered_data() %>%
       arrange(desc(Rating)) %>%
       slice(1:20) %>%
       select(Movie_Name, Year, Rating, Worldwide_Gross) %>%
-      datatable(options = list(columnDefs = list(list(className = "dt-center", targets = "_all"))))
+      datatable()
   })
   
-  # Four quadrant analysis scatter plot
+  # Four quadrant analysis scatter plot split by average rating and average gross
   output$quadrant_plot <- renderPlotly({
     avg_r <- mean(filtered_data()$Rating, na.rm=TRUE)
     avg_g <- mean(filtered_data()$Worldwide_Gross, na.rm=TRUE)/1e6
@@ -282,9 +281,9 @@ server <- function(input, output, session) {
       geom_vline(xintercept = avg_r, linetype = "dashed", color = "gray50", linewidth=1) +
       geom_hline(yintercept = avg_g, linetype = "dashed", color = "gray50", linewidth=1) +
       geom_point(alpha = 0.6, color = "#1565C0") +
-      labs(x = "Audience Rating", y = "Worldwide Gross (Million USD)", title = "Movie Performance Quadrant") +
+      labs(x = "Audience Rating", y = "Worldwide Gross (Million USD)") +
       theme_minimal()
-    ggplotly(p) %>% layout(title = list(x = 0.5))
+    ggplotly(p)
   })
 }
 
