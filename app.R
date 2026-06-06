@@ -201,14 +201,15 @@ server <- function(input, output, session) {
     valueBox(paste0(avg, " min"), "Avg Duration", icon = icon("clock"), color = "aqua")
   })
   
-  # Render full interactive dataset table
+  # Render full interactive dataset table, ALL COLUMN CENTER
   output$movie_table <- renderDT({
     filtered_data() %>%
       select(Movie_Name, Year, Worldwide_Gross, Rating, Duration_min, Year_Group) %>%
-      datatable(options = list(scrollX = TRUE, pageLength = 10))
+      datatable(options = list(scrollX = TRUE, pageLength = 10,
+                               columnDefs = list(list(className = 'dt-center', targets = '_all'))))
   })
   
-  # Annual average box office line chart (convert ggplot to plotly interactive)
+  # Annual average box office line chart (convert ggplot to plotly interactive), title center
   output$trend_plot <- renderPlotly({
     p <- filtered_data() %>%
       group_by(Year) %>%
@@ -216,62 +217,62 @@ server <- function(input, output, session) {
       ggplot(aes(x = Year, y = avg_gross)) +
       geom_line(color = "#1565C0", linewidth = 1.2) +
       labs(title = "Annual Average Box Office", x = "Year", y = "Gross (Million USD)") +
-      theme_minimal()
+      theme_minimal() + theme(plot.title = element_text(hjust = 0.5))
     ggplotly(p)
   })
   
-  # Annual movie release count bar chart
+  # Annual movie release count bar chart, title center
   output$count_plot <- renderPlotly({
     p <- filtered_data() %>%
       count(Year) %>%
       ggplot(aes(x = Year, y = n)) +
       geom_col(fill = "#42A5F5") +
-      labs(x = "Year", y = "Number of Movies") +
-      theme_minimal()
+      labs(x = "Year", y = "Number of Movies", title = "Annual Movie Count") +
+      theme_minimal() + theme(plot.title = element_text(hjust = 0.5))
     ggplotly(p)
   })
   
-  # Box office distribution boxplot grouped by year group with log y-axis
+  # Box office distribution boxplot grouped by year group with log y-axis, title center
   output$box_plot <- renderPlotly({
     p <- filtered_data() %>%
       ggplot(aes(x = Year_Group, y = Worldwide_Gross/1e6, fill = Year_Group)) +
       geom_boxplot(alpha=0.7) +
       scale_fill_manual(values = c("#BBDEFB", "#64B5F6", "#1976D2")) +
       scale_y_log10(labels = scales::comma) +
-      labs(x = "Year Group", y = "Worldwide Gross (Million$)") +
-      theme_minimal()
+      labs(x = "Year Group", y = "Worldwide Gross (Million$)", title = "Box Office Distribution by Year Group") +
+      theme_minimal() + theme(plot.title = element_text(hjust = 0.5))
     ggplotly(p)
   })
   
-  # Runtime vs Rating scatter plot
+  # Runtime vs Rating scatter plot, title center
   output$scatter_plot <- renderPlotly({
     p <- filtered_data() %>%
       ggplot(aes(x = Duration_min, y = Rating)) +
       geom_point(alpha = 0.6, color = "#1976D2") +
-      labs(x = "Duration (minutes)", y = "Audience Rating") +
-      theme_minimal()
+      labs(x = "Duration (minutes)", y = "Audience Rating", title = "Duration vs Rating") +
+      theme_minimal() + theme(plot.title = element_text(hjust = 0.5))
     ggplotly(p)
   })
   
-  # Top20 movies sorted by worldwide gross revenue
+  # Top20 movies sorted by worldwide gross revenue, table center
   output$top_gross <- renderDT({
     filtered_data() %>%
       arrange(desc(Worldwide_Gross)) %>%
       slice(1:20) %>%
       select(Movie_Name, Year, Worldwide_Gross, Rating) %>%
-      datatable()
+      datatable(options = list(columnDefs = list(list(className = 'dt-center', targets = '_all'))))
   })
   
-  # Top20 movies sorted by audience rating
+  # Top20 movies sorted by audience rating, table center
   output$top_rating <- renderDT({
     filtered_data() %>%
       arrange(desc(Rating)) %>%
       slice(1:20) %>%
       select(Movie_Name, Year, Rating, Worldwide_Gross) %>%
-      datatable()
+      datatable(options = list(columnDefs = list(list(className = 'dt-center', targets = '_all'))))
   })
   
-  # Four quadrant analysis scatter plot split by average rating and average gross
+  # Four quadrant analysis scatter plot split by average rating and average gross, title center
   output$quadrant_plot <- renderPlotly({
     avg_r <- mean(filtered_data()$Rating, na.rm=TRUE)
     avg_g <- mean(filtered_data()$Worldwide_Gross, na.rm=TRUE)/1e6
@@ -281,8 +282,8 @@ server <- function(input, output, session) {
       geom_vline(xintercept = avg_r, linetype = "dashed", color = "gray50", linewidth=1) +
       geom_hline(yintercept = avg_g, linetype = "dashed", color = "gray50", linewidth=1) +
       geom_point(alpha = 0.6, color = "#1565C0") +
-      labs(x = "Audience Rating", y = "Worldwide Gross (Million USD)") +
-      theme_minimal()
+      labs(x = "Audience Rating", y = "Worldwide Gross (Million USD)", title = "Movie Performance Quadrant") +
+      theme_minimal() + theme(plot.title = element_text(hjust = 0.5))
     ggplotly(p)
   })
 }
